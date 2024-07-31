@@ -1,9 +1,12 @@
 "use client";
 import React, { useState } from 'react';
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 const FormCreation = () => {
   const [formTitle, setFormTitle] = useState('');
   const [questions, setQuestions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addQuestion = () => {
     setQuestions([...questions, { type: 'text', question: '', options: [] }]);
@@ -27,10 +30,29 @@ const FormCreation = () => {
     setQuestions(updatedQuestions);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ formTitle, questions });
-    // Here you would typically save the form to your database
+    setIsSubmitting(true);
+
+    const formData = {
+      title: formTitle,
+      questions: questions,
+      userId: "user123", //change after authentication
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, "forms"), {formData});
+      console.log("Form created with ID: ", docRef.id);
+      // dashboard pe redirect kara denge
+      setFormTitle('');
+      setQuestions([]);
+      // success message?
+    } catch (error) {
+      console.error("Error creating form: ", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,7 +67,7 @@ const FormCreation = () => {
           className="w-full p-2 mb-4 border rounded text-black"
         />
         {questions.map((question, qIndex) => (
-          <div key={qIndex} className="mb-4 p-4 border rounded">
+          <div key={qIndex} className="mb-4 p-4 border rounded text-black">
             <select
               value={question.type}
               onChange={(e) => updateQuestion(qIndex, 'type', e.target.value)}
@@ -91,8 +113,12 @@ const FormCreation = () => {
         >
           Add Question
         </button>
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Create Form
+        <button 
+          type="submit" 
+          className="bg-blue-500 text-white p-2 rounded"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Creating Form...' : 'Create Form'}
         </button>
       </form>
     </div>
