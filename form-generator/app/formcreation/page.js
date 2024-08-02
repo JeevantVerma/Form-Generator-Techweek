@@ -37,17 +37,18 @@ const FormCreation = () => {
     const formData = {
       title: formTitle,
       questions: questions,
-      userId: "user123", //change after authentication
+      userId: "user123", // authentication ke baad change karna hai
       createdAt: new Date().toISOString()
     };
 
     try {
-      const docRef = await addDoc(collection(db, "forms"), {formData});
-      console.log("Form created with ID: ", docRef.id);
-      // dashboard pe redirect kara denge
+      const docRef = await addDoc(collection(db, "forms"), formData);
+      const formId = docRef.id;
+      const formUrl = `${window.location.origin}/forms/${formId}`;
+      console.log("Form created with URL: ", formUrl);
+      // frontend mei daal denge yeh baad mei
       setFormTitle('');
       setQuestions([]);
-      // success message?
     } catch (error) {
       console.error("Error creating form: ", error);
     } finally {
