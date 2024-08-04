@@ -1,12 +1,14 @@
 "use client";
 import React, { useState } from 'react';
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 const FormCreation = () => {
   const [formTitle, setFormTitle] = useState('');
   const [questions, setQuestions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user] = useAuthState(auth);
 
   const addQuestion = () => {
     setQuestions([...questions, { type: 'text', question: '', options: [] }]);
@@ -33,14 +35,20 @@ const FormCreation = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+  
+    if (!user) {
+      console.error("No user is signed in");
+      setIsSubmitting(false);
+      return;
+    }
+  
     const formData = {
       title: formTitle,
       questions: questions,
-      userId: "user123", // authentication ke baad change karna hai
+      userId: user.uid,
       createdAt: new Date().toISOString()
     };
-
+  
     try {
       const docRef = await addDoc(collection(db, "forms"), formData);
       const formId = docRef.id;
