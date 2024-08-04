@@ -15,16 +15,12 @@ export default function FormPage() {
 
   useEffect(() => {
     const fetchForm = async () => {
-      console.log("Fetching form with ID:", id);
       if (id) {
         setIsLoading(true);
         try {
           const docRef = doc(db, "forms", id);
-          console.log("Document reference:", docRef);
           const docSnap = await getDoc(docRef);
-          console.log("Document snapshot:", docSnap);
           if (docSnap.exists()) {
-            console.log("Form data:", docSnap.data());
             setForm(docSnap.data());
           } else {
             console.log("No such form!");
@@ -61,46 +57,61 @@ export default function FormPage() {
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (!form) return <div>Form not found</div>;
+  if (isLoading) return <div className="flex justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+  </div>;
+  if (!form) return <div className="text-center text-2xl mt-10">Form not found</div>;
+
+  const formStyle = {
+    backgroundColor: form.backgroundColor || '#212121',
+    fontFamily: form.fontFamily || 'Arial, sans-serif',
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{form.title}</h1>
-      <form onSubmit={handleSubmit}>
-        {form.questions.map((question, index) => (
-          <div key={index} className="mb-4">
-            <label className="block mb-2">{question.question}</label>
-            {question.type === 'text' ? (
-              <input
-                type="text"
-                onChange={(e) => handleResponseChange(index, e.target.value)}
-                className="w-full p-2 border rounded text-black"
-              />
-            ) : question.type === 'multiplechoice' ? (
-              question.options.map((option, optionIndex) => (
-                <div key={optionIndex}>
-                  <input
-                    type="radio"
-                    id={`${index}-${optionIndex}`}
-                    name={`question-${index}`}
-                    value={option}
-                    onChange={(e) => handleResponseChange(index, e.target.value)}
-                  />
-                  <label htmlFor={`${index}-${optionIndex}`}>{option}</label>
+    <div className="min-h-screen py-10" style={formStyle}>
+      <div className="container mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold mb-6 text-center" style={{color: form.titleColor || '#333'}}>{form.title}</h1>
+        <form onSubmit={handleSubmit}>
+          {form.questions.map((question, index) => (
+            <div key={index} className="mb-6 p-4 rounded-lg" style={{borderColor: question.borderColor || '#e2e8f0', borderWidth: '2px'}}>
+              <label className="block mb-2 text-lg font-semibold" style={{color: question.questionColor || '#4a5568'}}>{question.question}</label>
+              {question.type === 'text' ? (
+                <input
+                  type="text"
+                  onChange={(e) => handleResponseChange(index, e.target.value)}
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  style={{borderColor: question.inputBorderColor || '#cbd5e0'}}
+                />
+              ) : question.type === 'multiplechoice' ? (
+                <div className="space-y-2">
+                  {question.options.map((option, optionIndex) => (
+                    <div key={optionIndex} className="flex items-center">
+                      <input
+                        type="radio"
+                        id={`${index}-${optionIndex}`}
+                        name={`question-${index}`}
+                        value={option}
+                        onChange={(e) => handleResponseChange(index, e.target.value)}
+                        className="mr-2 text-black"
+                      />
+                      <label htmlFor={`${index}-${optionIndex}`} className="text-gray-700">{option}</label>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : null}
+              ) : null}
+            </div>
+          ))}
+          <div className="text-center">
+            <button 
+              type="submit" 
+              className="bg-blue-500 text-white py-2 px-6 rounded-full hover:bg-blue-600 transition duration-200"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </button>
           </div>
-        ))}
-        <button 
-          type="submit" 
-          className="bg-blue-500 text-white p-2 rounded"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit'}
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
