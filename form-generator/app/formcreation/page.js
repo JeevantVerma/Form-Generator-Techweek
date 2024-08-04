@@ -9,9 +9,19 @@ const FormCreation = () => {
   const [questions, setQuestions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user] = useAuthState(auth);
+  const [backgroundColor, setBackgroundColor] = useState('#f0f4f8');
+  const [titleColor, setTitleColor] = useState('#333');
+  const [fontFamily, setFontFamily] = useState('Arial, sans-serif');
 
   const addQuestion = () => {
-    setQuestions([...questions, { type: 'text', question: '', options: [] }]);
+    setQuestions([...questions, { 
+      type: 'text', 
+      question: '', 
+      options: [],
+      borderColor: '#e2e8f0',
+      questionColor: '#4a5568',
+      inputBorderColor: '#cbd5e0'
+    }]);
   };
 
   const removeQuestion = (index) => {
@@ -30,12 +40,6 @@ const FormCreation = () => {
   const addOption = (questionIndex) => {
     const updatedQuestions = [...questions];
     updatedQuestions[questionIndex].options.push('');
-    setQuestions(updatedQuestions);
-  };
-
-  const updateOption = (questionIndex, optionIndex, value) => {
-    const updatedQuestions = [...questions];
-    updatedQuestions[questionIndex].options[optionIndex] = value;
     setQuestions(updatedQuestions);
   };
 
@@ -59,7 +63,10 @@ const FormCreation = () => {
       title: formTitle,
       questions: questions,
       userId: user.uid,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      backgroundColor,
+      titleColor,
+      fontFamily
     };
   
     try {
@@ -67,7 +74,6 @@ const FormCreation = () => {
       const formId = docRef.id;
       const formUrl = `${window.location.origin}/forms/${formId}`;
       console.log("Form created with URL: ", formUrl);
-      // frontend mei daal denge yeh baad mei
       setFormTitle('');
       setQuestions([]);
     } catch (error) {
@@ -81,13 +87,46 @@ const FormCreation = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Create a New Form</h1>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={formTitle}
-          onChange={(e) => setFormTitle(e.target.value)}
-          placeholder="Form Title"
-          className="w-full p-2 mb-4 border rounded text-black"
-        />
+        <div className="mb-4">
+          <label className="block mb-2">Form Title</label>
+          <input
+            type="text"
+            value={formTitle}
+            onChange={(e) => setFormTitle(e.target.value)}
+            placeholder="Form Title"
+            className="w-full p-2 border rounded text-black"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Background Color</label>
+          <input
+            type="color"
+            value={backgroundColor}
+            onChange={(e) => setBackgroundColor(e.target.value)}
+            className="p-1 border rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Title Color</label>
+          <input
+            type="color"
+            value={titleColor}
+            onChange={(e) => setTitleColor(e.target.value)}
+            className="p-1 border rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Font Family</label>
+          <select
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value)}
+            className="w-full p-2 border rounded text-black"
+          >
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Courier New', monospace">Courier New</option>
+          </select>
+        </div>
         {questions.map((question, qIndex) => (
           <div key={qIndex} className="mb-4 p-4 border rounded text-black">
             <div className="flex justify-between mb-2">
@@ -98,6 +137,7 @@ const FormCreation = () => {
               >
                 <option value="text">Text</option>
                 <option value="multiplechoice">Multiple Choice</option>
+                <option value="file">File Upload</option>
               </select>
               <button
                 type="button"
@@ -114,6 +154,33 @@ const FormCreation = () => {
               placeholder="Question"
               className="w-full p-2 mb-2 border rounded text-black"
             />
+            <div className="mb-2">
+              <label className="block mb-1 text-white">Border Color</label>
+              <input
+                type="color"
+                value={question.borderColor}
+                onChange={(e) => updateQuestion(qIndex, 'borderColor', e.target.value)}
+                className="p-1 border rounded"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block mb-1 text-white">Question Color</label>
+              <input
+                type="color"
+                value={question.questionColor}
+                onChange={(e) => updateQuestion(qIndex, 'questionColor', e.target.value)}
+                className="p-1 border rounded"
+              />
+            </div>
+            <div className="mb-2">
+              <label className="block mb-1 text-white">Input Border Color</label>
+              <input
+                type="color"
+                value={question.inputBorderColor}
+                onChange={(e) => updateQuestion(qIndex, 'inputBorderColor', e.target.value)}
+                className="p-1 border rounded"
+              />
+            </div>
             {question.type === 'multiplechoice' && (
               <div>
                 {question.options.map((option, oIndex) => (
@@ -121,7 +188,7 @@ const FormCreation = () => {
                     <input
                       type="text"
                       value={option}
-                      onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                      onChange={(e) => updateQuestion(qIndex, 'options', question.options.map((opt, i) => i === oIndex ? e.target.value : opt))}
                       placeholder={`Option ${oIndex + 1}`}
                       className="flex-grow p-2 border rounded text-black mr-2"
                     />
@@ -141,6 +208,24 @@ const FormCreation = () => {
                 >
                   Add Option
                 </button>
+              </div>
+            )}
+            {question.type === 'file' && (
+              <div>
+                <label className='text-white'>Max file size (in MB):</label>
+                <input
+                  type="number"
+                  value={question.maxSize || 5}
+                  onChange={(e) => handleQuestionChange(qIndex, 'maxSize', parseInt(e.target.value))}
+                  className="w-full p-2 mb-2 border rounded text-black"
+                />
+                <label className='text-white'>Allowed file types (comma-separated):</label>
+                <input
+                  type="text"
+                  value={question.allowedTypes || '.pdf,.doc,.docx'}
+                  onChange={(e) => handleQuestionChange(qIndex, 'allowedTypes', e.target.value)}
+                  className="w-full p-2 mb-2 border rounded text-black"
+                />
               </div>
             )}
           </div>

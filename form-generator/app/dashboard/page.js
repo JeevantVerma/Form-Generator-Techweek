@@ -67,6 +67,10 @@ const Dashboard = () => {
     router.push(`/formedit/${formId}`);
   };
 
+  const handleAnalytics = (formId) => {
+    router.push(`/formanalytics/${formId}`);
+  };
+
   if (loading) {
     return <div className="text-center">Loading...</div>;
   }
@@ -140,6 +144,12 @@ const Dashboard = () => {
                       className="bg-red-500 hover:bg-red-600 text-white p-2 rounded"
                     >
                       Delete
+                    </button>
+                    <button 
+                      onClick={() => handleAnalytics(form.id)} 
+                      className="bg-green-500 hover:bg-green-600 text-white p-2 rounded"
+                    >
+                      Analytics
                     </button>
                   </div>
                 </div>
