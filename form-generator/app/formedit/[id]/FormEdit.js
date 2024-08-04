@@ -1,14 +1,13 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 const FormEdit = ({ id }) => {
   const router = useRouter();
   const [user] = useAuthState(auth);
-  const [form, setForm] = useState(null);
   const [formTitle, setFormTitle] = useState('');
   const [questions, setQuestions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +28,6 @@ const FormEdit = ({ id }) => {
             router.push('/dashboard');
             return;
           }
-          setForm(formData);
           setFormTitle(formData.title);
           setQuestions(formData.questions);
         } else {
@@ -45,9 +43,32 @@ const FormEdit = ({ id }) => {
     fetchForm();
   }, [id, user, router]);
 
+  const addQuestion = () => {
+    setQuestions([...questions, { type: 'text', question: '', options: [] }]);
+  };
+
+  const removeQuestion = (index) => {
+    setQuestions(questions.filter((_, i) => i !== index));
+  };
+
   const handleQuestionChange = (index, field, value) => {
     const updatedQuestions = [...questions];
     updatedQuestions[index][field] = value;
+    if (field === 'type' && value === 'text') {
+      updatedQuestions[index].options = [];
+    }
+    setQuestions(updatedQuestions);
+  };
+
+  const addOption = (questionIndex) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[questionIndex].options.push('');
+    setQuestions(updatedQuestions);
+  };
+
+  const removeOption = (questionIndex, optionIndex) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[questionIndex].options = updatedQuestions[questionIndex].options.filter((_, i) => i !== optionIndex);
     setQuestions(updatedQuestions);
   };
 
@@ -96,14 +117,23 @@ const FormEdit = ({ id }) => {
         />
         {questions.map((question, qIndex) => (
           <div key={qIndex} className="mb-4 p-4 border rounded text-black">
-            <select
-              value={question.type}
-              onChange={(e) => handleQuestionChange(qIndex, 'type', e.target.value)}
-              className="p-2 mb-2 border rounded text-black"
-            >
-              <option value="text">Text</option>
-              <option value="multiplechoice">Multiple Choice</option>
-            </select>
+            <div className="flex justify-between mb-2">
+              <select
+                value={question.type}
+                onChange={(e) => handleQuestionChange(qIndex, 'type', e.target.value)}
+                className="p-2 border rounded text-black"
+              >
+                <option value="text">Text</option>
+                <option value="multiplechoice">Multiple Choice</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => removeQuestion(qIndex)}
+                className="bg-red-500 text-white p-2 rounded"
+              >
+                Remove Question
+              </button>
+            </div>
             <input
               type="text"
               value={question.question}
@@ -114,19 +144,41 @@ const FormEdit = ({ id }) => {
             {question.type === 'multiplechoice' && (
               <div>
                 {question.options.map((option, oIndex) => (
-                  <input
-                    key={oIndex}
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleQuestionChange(qIndex, 'options', question.options.map((opt, i) => i === oIndex ? e.target.value : opt))}
-                    placeholder={`Option ${oIndex + 1}`}
-                    className="w-full p-2 mb-2 border rounded text-black"
-                  />
+                  <div key={oIndex} className="flex mb-2">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleQuestionChange(qIndex, 'options', question.options.map((opt, i) => i === oIndex ? e.target.value : opt))}
+                      placeholder={`Option ${oIndex + 1}`}
+                      className="flex-grow p-2 border rounded text-black mr-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeOption(qIndex, oIndex)}
+                      className="bg-red-500 text-white p-2 rounded"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => addOption(qIndex)}
+                  className="bg-blue-500 text-white p-2 rounded"
+                >
+                  Add Option
+                </button>
               </div>
             )}
           </div>
         ))}
+        <button
+          type="button"
+          onClick={addQuestion}
+          className="bg-green-500 text-white p-2 rounded mr-2"
+        >
+          Add Question
+        </button>
         <button
           type="submit"
           className="bg-blue-500 text-white p-2 rounded"

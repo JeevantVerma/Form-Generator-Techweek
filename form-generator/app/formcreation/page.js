@@ -46,7 +46,35 @@ const FormCreation = () => {
   };
 
   const handleSubmit = async (e) => {
-    // ... (keep the existing handleSubmit logic)
+    e.preventDefault();
+    setIsSubmitting(true);
+  
+    if (!user) {
+      console.error("No user is signed in");
+      setIsSubmitting(false);
+      return;
+    }
+  
+    const formData = {
+      title: formTitle,
+      questions: questions,
+      userId: user.uid,
+      createdAt: new Date().toISOString()
+    };
+  
+    try {
+      const docRef = await addDoc(collection(db, "forms"), formData);
+      const formId = docRef.id;
+      const formUrl = `${window.location.origin}/forms/${formId}`;
+      console.log("Form created with URL: ", formUrl);
+      // frontend mei daal denge yeh baad mei
+      setFormTitle('');
+      setQuestions([]);
+    } catch (error) {
+      console.error("Error creating form: ", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
