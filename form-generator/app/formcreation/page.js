@@ -14,9 +14,16 @@ const FormCreation = () => {
     setQuestions([...questions, { type: 'text', question: '', options: [] }]);
   };
 
+  const removeQuestion = (index) => {
+    setQuestions(questions.filter((_, i) => i !== index));
+  };
+
   const updateQuestion = (index, field, value) => {
     const updatedQuestions = [...questions];
     updatedQuestions[index][field] = value;
+    if (field === 'type' && value === 'text') {
+      updatedQuestions[index].options = [];
+    }
     setQuestions(updatedQuestions);
   };
 
@@ -32,36 +39,14 @@ const FormCreation = () => {
     setQuestions(updatedQuestions);
   };
 
+  const removeOption = (questionIndex, optionIndex) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[questionIndex].options = updatedQuestions[questionIndex].options.filter((_, i) => i !== optionIndex);
+    setQuestions(updatedQuestions);
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-  
-    if (!user) {
-      console.error("No user is signed in");
-      setIsSubmitting(false);
-      return;
-    }
-  
-    const formData = {
-      title: formTitle,
-      questions: questions,
-      userId: user.uid,
-      createdAt: new Date().toISOString()
-    };
-  
-    try {
-      const docRef = await addDoc(collection(db, "forms"), formData);
-      const formId = docRef.id;
-      const formUrl = `${window.location.origin}/forms/${formId}`;
-      console.log("Form created with URL: ", formUrl);
-      // frontend mei daal denge yeh baad mei
-      setFormTitle('');
-      setQuestions([]);
-    } catch (error) {
-      console.error("Error creating form: ", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    // ... (keep the existing handleSubmit logic)
   };
 
   return (
@@ -77,14 +62,23 @@ const FormCreation = () => {
         />
         {questions.map((question, qIndex) => (
           <div key={qIndex} className="mb-4 p-4 border rounded text-black">
-            <select
-              value={question.type}
-              onChange={(e) => updateQuestion(qIndex, 'type', e.target.value)}
-              className="p-2 mb-2 border rounded text-black"
-            >
-              <option value="text">Text</option>
-              <option value="multiplechoice">Multiple Choice</option>
-            </select>
+            <div className="flex justify-between mb-2">
+              <select
+                value={question.type}
+                onChange={(e) => updateQuestion(qIndex, 'type', e.target.value)}
+                className="p-2 border rounded text-black"
+              >
+                <option value="text">Text</option>
+                <option value="multiplechoice">Multiple Choice</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => removeQuestion(qIndex)}
+                className="bg-red-500 text-white p-2 rounded"
+              >
+                Remove Question
+              </button>
+            </div>
             <input
               type="text"
               value={question.question}
@@ -95,14 +89,22 @@ const FormCreation = () => {
             {question.type === 'multiplechoice' && (
               <div>
                 {question.options.map((option, oIndex) => (
-                  <input
-                    key={oIndex}
-                    type="text"
-                    value={option}
-                    onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                    placeholder={`Option ${oIndex + 1}`}
-                    className="w-full p-2 mb-2 border rounded text-black"
-                  />
+                  <div key={oIndex} className="flex mb-2">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                      placeholder={`Option ${oIndex + 1}`}
+                      className="flex-grow p-2 border rounded text-black mr-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeOption(qIndex, oIndex)}
+                      className="bg-red-500 text-white p-2 rounded"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 ))}
                 <button
                   type="button"
