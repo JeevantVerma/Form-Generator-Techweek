@@ -13,6 +13,7 @@ export default function FormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [submissionStatus, setSubmissionStatus] = useState(null); // New state variable
 
   useEffect(() => {
     const fetchForm = async () => {
@@ -62,8 +63,10 @@ export default function FormPage() {
         submittedAt: new Date().toISOString()
       });
       console.log("Response submitted successfully");
+      setSubmissionStatus('Form submitted successfully!'); // Set submission status on success
     } catch (error) {
       console.error("Error submitting response: ", error);
+      setSubmissionStatus('Error submitting form. Please try again.'); // Set error message on failure
     } finally {
       setIsSubmitting(false);
     }
@@ -146,6 +149,11 @@ export default function FormPage() {
             </button>
           </div>
         </form>
+        {submissionStatus && (
+          <div className="mt-4 text-center text-lg font-semibold text-black">
+            {submissionStatus}
+          </div>
+        )}
       </div>
       <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-2 rounded-full">
         {progress}% Complete
